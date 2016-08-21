@@ -1,5 +1,5 @@
-from suitcase.fields import UBInt8, UBInt16, UBInt32, UBInt56, UBInt8Sequence, \
-    Magic, LengthField, SubstructureField, DispatchField, DispatchTarget, FieldProperty, Payload, CRCField
+from suitcase.fields import UBInt8, UBInt16, UBInt32, UBInt8Sequence, \
+    Magic, LengthField, DispatchField, DispatchTarget, FieldProperty, Payload, CRCField
 from suitcase.structure import Structure
 
 
