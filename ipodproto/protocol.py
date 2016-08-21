@@ -1,6 +1,7 @@
 from suitcase.fields import UBInt8, UBInt16, UBInt32, UBInt8Sequence, \
     Magic, LengthField, DispatchField, DispatchTarget, FieldProperty, Payload, CRCField
 from suitcase.structure import Structure
+from suitcase.protocol import StreamProtocolHandler
 
 
 def ipod_checksum(data, crc=0):
@@ -308,6 +309,47 @@ class IpodPacket(Structure):
         0x04: AirCommand,
     })
     checksum = CRCField(UBInt8(), algo=ipod_checksum, start=2, end=-1)
+
+
+class IpodProtocolHandler:
+    def __init__(self, stream, read_args=None, write_args=None):
+        self.stream = stream
+        self.handler = StreamProtocolHandler(IpodPacket, self.packet_received)
+        self.running = False
+        self.read_args = read_args or {}
+        self.write_args = write_args or {}
+
+    def run(self):
+        """
+        Read from the underlying stream and pass it to the packet handler, until `stop()` is called.
+        """
+        self.running = True
+
+        while self.running:
+            data = self.stream.read(**self.read_args)
+
+            if len(data):
+                self.handler.feed(data)
+
+    def stop(self):
+        """
+        Stops reading data from the stream.
+        """
+        self.running = False
+
+    def send_packet(self, packet: IpodPacket):
+        """
+        Packs and sends an IpodPacket over the underlying stream.
+        :param packet: The packet to pack and send.
+        """
+        self.stream.write(packet.pack(), **self.write_args)
+
+    def packet_received(self, packet: IpodPacket):
+        """
+        Called when a fully-formed packet is received from the underlying data stream.
+        :param packet: The packet that was received.
+        """
+        pass
 
 
 if __name__ == "__main__":
