@@ -34,6 +34,8 @@ class IpodEmulator(IpodProtocolHandler):
         self.shuffle_mode = SHUFFLE_OFF
         self.repeat_mode = REPEAT_OFF
 
+        self.screen_size = (310, 168)
+
     def packet_received(self, packet: IpodPacket):
         if packet.mode == MODE_SWITCH:
             self.handle_mode_switch_command(packet.command)
@@ -239,6 +241,39 @@ class IpodEmulator(IpodProtocolHandler):
             self.handle_get_repeat_mode()
         elif command.id == AirMode.Commands.SET_REPEAT_MODE:
             self.handle_set_repeat_mode(command.parameters)
+        elif command.id == AirMode.Commands.UPLOAD_PICTURE:
+            # TODO: Implement picture uploading, for whatever reason
+            pass
+        elif command.id == AirMode.Commands.GET_SCREEN_SIZE:
+            self.handle_get_screen_size_command()
+        elif command.id == AirMode.Commands.GET_PLAYLIST_SIZE:
+            self.handle_get_playlist_size_command()
+        elif command.id == AirMode.Commands.PLAYLIST_JUMP:
+            self.handle_playlist_jump_command(command.parameters)
+        elif command.id == AirMode.Commands.NCU_38:
+            # TODO: This is some sort of color get-screen-size command
+            pass
+
+    def jump_to_song(self, number):
+        pass
+
+    def handle_playlist_jump_command(self, number):
+        self.jump_to_song(number)
+
+    def get_playlist_size(self):
+        return 0
+
+    def handle_get_playlist_size_command(self):
+        res = AirCommand()
+        res.id = AirMode.Commands.RES_PLAYLIST_SIZE
+        res.parameters = self.get_playlist_size()
+
+    def handle_get_screen_size_command(self):
+        res = AirCommand()
+        res.id = AirMode.Commands.RES_SCREEN_SIZE
+        res.parameters = ScreenSizeResult()
+        res.parameters.width, res.parameters.height = self.screen_size
+        self.send_air_response(res)
 
     def handle_set_repeat_mode(self, mode):
         if mode in (REPEAT_OFF, REPEAT_SONG, REPEAT_ALBUM):
@@ -560,6 +595,3 @@ class IpodEmulator(IpodProtocolHandler):
 
     def _handle_ping(self):
         self._send_ping_response()
-
-class IpodInterface(IpodProtocolHandler):
-    pass
