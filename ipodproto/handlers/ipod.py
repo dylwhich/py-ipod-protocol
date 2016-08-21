@@ -48,16 +48,16 @@ class IpodEmulator(IpodProtocolHandler):
         elif packet.mode == MODE_ADVANCED_REMOTE:
             self.handle_advanced_remote_command(packet.command)
 
-    def handle_mode_switch_command(self, command: SwitchModeCommand):
-        if command.id == SwitchMode.Commands.SET_VOICE_RECORDER:
+    def handle_mode_switch_command(self, cmd: SwitchModeCommand):
+        if cmd.id == SwitchMode.Commands.SET_VOICE_RECORDER:
             self.mode = MODE_VOICE_RECORDER
-        elif command == SwitchMode.Commands.SET_IPOD_REMOTE or \
-                command == SwitchMode.Commands.SET_IPOD_REMOTE_ALT:
+        elif cmd == SwitchMode.Commands.SET_IPOD_REMOTE or \
+                cmd == SwitchMode.Commands.SET_IPOD_REMOTE_ALT:
             self.mode = MODE_SIMPLE_REMOTE
-        elif command == SwitchMode.Commands.SET_ADVANCED_REMOTE or \
-                command == SwitchMode.Commands.SET_ADVANCED_REMOTE_ALT:
+        elif cmd == SwitchMode.Commands.SET_ADVANCED_REMOTE or \
+                cmd == SwitchMode.Commands.SET_ADVANCED_REMOTE_ALT:
             self.mode = MODE_ADVANCED_REMOTE
-        elif command == SwitchMode.Commands.GET_MODE:
+        elif cmd == SwitchMode.Commands.GET_MODE:
             self._send_get_mode_response()
 
     def _send_get_mode_response(self):
@@ -78,11 +78,11 @@ class IpodEmulator(IpodProtocolHandler):
 
         self.send_packet(res)
 
-    def handle_voice_recorder_command(self, command: VoiceRecorderCommand):
+    def handle_voice_recorder_command(self, cmd: VoiceRecorderCommand):
         # The iPod only sends these commands
         pass
 
-    def handle_simple_remote_command(self, command: SimpleRemoteCommand):
+    def handle_simple_remote_command(self, cmd: SimpleRemoteCommand):
         command_map = {
             SimpleRemoteMode.Commands.BUTTON_RELEASED: self.on_button_released,
             SimpleRemoteMode.Commands.PLAY: self.play,
@@ -108,10 +108,10 @@ class IpodEmulator(IpodProtocolHandler):
             SimpleRemoteMode.Commands.SCROLL_DOWN: self.scroll_down,
         }
 
-        if command not in command_map:
-            raise ValueError("Invalid command for simple remote mode: " + str(command))
+        if cmd not in command_map:
+            raise ValueError("Invalid command for simple remote mode: " + str(cmd))
 
-        command_map[command]()
+        command_map[cmd]()
 
     def on_button_released(self):
         pass
@@ -188,69 +188,69 @@ class IpodEmulator(IpodProtocolHandler):
     def scroll_down(self):
         pass
 
-    def handle_request_mode_status_command(self, command: RequestModeStatusCommand):
+    def handle_request_mode_status_command(self, cmd: RequestModeStatusCommand):
         self._send_get_mode_response()
 
-    def handle_advanced_remote_command(self, command: AirCommand):
-        if command.id == AirMode.Commands.NCU_02:
+    def handle_advanced_remote_command(self, cmd: AirCommand):
+        if cmd.id == AirMode.Commands.NCU_02:
             # Simple ping command
             self._handle_ping()
-        elif command.id == AirMode.Commands.NCU_09:
+        elif cmd.id == AirMode.Commands.NCU_09:
             # Gets a mystery flag
             self._send_ncu_09_response()
-        elif command.id == AirMode.Commands.NCU_0B:
+        elif cmd.id == AirMode.Commands.NCU_0B:
             # Sets the mystery flag
-            self._handle_ncu_0b_command(command.parameters)
-        elif command.id == AirMode.Commands.NCU_0C:
+            self._handle_ncu_0b_command(cmd.parameters)
+        elif cmd.id == AirMode.Commands.NCU_0C:
             self._handle_ncu_0c_command()
-        elif command.id == AirMode.Commands.GET_IPOD_TYPE:
+        elif cmd.id == AirMode.Commands.GET_IPOD_TYPE:
             self.handle_get_ipod_type_command()
-        elif command.id == AirMode.Commands.GET_IPOD_NAME:
+        elif cmd.id == AirMode.Commands.GET_IPOD_NAME:
             self.handle_get_ipod_name_command()
-        elif command.id == AirMode.Commands.SWITCH_MAIN_PLAYLIST:
+        elif cmd.id == AirMode.Commands.SWITCH_MAIN_PLAYLIST:
             self.switch_main_playlist()
-        elif command.id == AirMode.Commands.SWITCH_ITEM:
-            self.switch_item(command.parameters.type, command.parameters.number)
-        elif command.id == AirMode.Commands.GET_TYPE_COUNT:
-            self.handle_get_item_count_command(command.parameters.type)
-        elif command.id == AirMode.Commands.GET_ITEM_NAMES:
-            self.handle_get_item_names_command(command.parameters.type,
-                                               command.parameters.start,
-                                               command.parameters.length)
-        elif command.id == AirMode.Commands.GET_TIME_STATUS:
+        elif cmd.id == AirMode.Commands.SWITCH_ITEM:
+            self.switch_item(cmd.parameters.type, cmd.parameters.number)
+        elif cmd.id == AirMode.Commands.GET_TYPE_COUNT:
+            self.handle_get_item_count_command(cmd.parameters.type)
+        elif cmd.id == AirMode.Commands.GET_ITEM_NAMES:
+            self.handle_get_item_names_command(cmd.parameters.type,
+                                               cmd.parameters.start,
+                                               cmd.parameters.length)
+        elif cmd.id == AirMode.Commands.GET_TIME_STATUS:
             self.handle_get_time_status_command()
-        elif command.id == AirMode.Commands.GET_PLAYLIST_POS:
+        elif cmd.id == AirMode.Commands.GET_PLAYLIST_POS:
             self.handle_get_playlist_position_command()
-        elif command.id == AirMode.Commands.GET_SONG_TITLE:
-            self.handle_get_song_title_command(command.parameters)
-        elif command.id == AirMode.Commands.GET_SONG_ARTIST:
-            self.handle_get_song_artist_command(command.parameters)
-        elif command.id == AirMode.Commands.GET_SONG_ALBUM:
-            self.handle_get_song_album_command(command.parameters)
-        elif command.id == AirMode.Commands.SET_POLLING_MODE:
-            self.handle_set_polling_mode(command.parameters)
-        elif command.id == AirMode.Commands.EXEC_PLAYLIST_JUMP:
-            self.handle_execute_playlist_jump_command(command.parameters)
-        elif command.id == AirMode.Commands.PLAYBACK_CONTROL:
-            self.handle_playback_control_command(command.parameters)
-        elif command.id == AirMode.Commands.GET_SHUFFLE_MODE:
+        elif cmd.id == AirMode.Commands.GET_SONG_TITLE:
+            self.handle_get_song_title_command(cmd.parameters)
+        elif cmd.id == AirMode.Commands.GET_SONG_ARTIST:
+            self.handle_get_song_artist_command(cmd.parameters)
+        elif cmd.id == AirMode.Commands.GET_SONG_ALBUM:
+            self.handle_get_song_album_command(cmd.parameters)
+        elif cmd.id == AirMode.Commands.SET_POLLING_MODE:
+            self.handle_set_polling_mode(cmd.parameters)
+        elif cmd.id == AirMode.Commands.EXEC_PLAYLIST_JUMP:
+            self.handle_execute_playlist_jump_command(cmd.parameters)
+        elif cmd.id == AirMode.Commands.PLAYBACK_CONTROL:
+            self.handle_playback_control_command(cmd.parameters)
+        elif cmd.id == AirMode.Commands.GET_SHUFFLE_MODE:
             self.handle_get_shuffle_mode_command()
-        elif command.id == AirMode.Commands.SET_SHUFFLE_MODE:
-            self.handle_set_shuffle_mode(command.parameters)
-        elif command.id == AirMode.Commands.GET_REPEAT_MODE:
+        elif cmd.id == AirMode.Commands.SET_SHUFFLE_MODE:
+            self.handle_set_shuffle_mode(cmd.parameters)
+        elif cmd.id == AirMode.Commands.GET_REPEAT_MODE:
             self.handle_get_repeat_mode()
-        elif command.id == AirMode.Commands.SET_REPEAT_MODE:
-            self.handle_set_repeat_mode(command.parameters)
-        elif command.id == AirMode.Commands.UPLOAD_PICTURE:
+        elif cmd.id == AirMode.Commands.SET_REPEAT_MODE:
+            self.handle_set_repeat_mode(cmd.parameters)
+        elif cmd.id == AirMode.Commands.UPLOAD_PICTURE:
             # TODO: Implement picture uploading, for whatever reason
             pass
-        elif command.id == AirMode.Commands.GET_SCREEN_SIZE:
+        elif cmd.id == AirMode.Commands.GET_SCREEN_SIZE:
             self.handle_get_screen_size_command()
-        elif command.id == AirMode.Commands.GET_PLAYLIST_SIZE:
+        elif cmd.id == AirMode.Commands.GET_PLAYLIST_SIZE:
             self.handle_get_playlist_size_command()
-        elif command.id == AirMode.Commands.PLAYLIST_JUMP:
-            self.handle_playlist_jump_command(command.parameters)
-        elif command.id == AirMode.Commands.NCU_38:
+        elif cmd.id == AirMode.Commands.PLAYLIST_JUMP:
+            self.handle_playlist_jump_command(cmd.parameters)
+        elif cmd.id == AirMode.Commands.NCU_38:
             # TODO: This is some sort of color get-screen-size command
             pass
 
@@ -586,10 +586,10 @@ class IpodEmulator(IpodProtocolHandler):
 
         self.send_air_response(res)
 
-    def send_air_response(self, command: AirCommand):
+    def send_air_response(self, cmd: AirCommand):
         res = IpodPacket()
         res.mode = MODE_ADVANCED_REMOTE
-        res.command = command
+        res.command = cmd
 
         self.send_packet(res)
 
