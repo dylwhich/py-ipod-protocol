@@ -31,20 +31,26 @@ TYPES = {
 
 TYPES_INV = {v: k for k, v in TYPES.items()}
 
+IPOD_TYPE_GEN3_20GB = 0x0102
+IPOD_TYPE_GEN4_30GB = 0x0109
+IPOD_TYPE_GEN5_30GB = 0x0109
+
 
 class ItemParam(Structure):
-    _type = UBInt8()
-    type = FieldProperty(_type,
-                         onget=lambda v: TYPES_INV[v],
-                         onset=lambda v: TYPES[v.upper()])
+    type = UBInt8()
+    type_name = FieldProperty(
+        type,
+        onget=lambda v: TYPES_INV[v],
+        onset=lambda v: TYPES[v.upper()])
     number = UBInt32()
 
 
 class ItemRangeParam(Structure):
-    _type = UBInt8()
-    type = FieldProperty(_type,
-                         onget=lambda v: TYPES_INV[v],
-                         onset=lambda v: TYPES[v.upper()])
+    type = UBInt8()
+    type_name = FieldProperty(
+        type,
+        onget=lambda v: TYPES_INV[v],
+        onset=lambda v: TYPES[v.upper()])
     start = UBInt32()
     length = UBInt32()
 
@@ -53,12 +59,12 @@ class ItemNameResult(Structure):
     offset = UBInt32()
     name = StringField()
 
+STATUS_STOP = 0x00
+STATUS_PLAYING = 0x01
+STATUS_PAUSED = 0x02
+
 
 class TimeStatusResult(Structure):
-    STATUS_STOP = 0x00
-    STATUS_PLAYING = 0x01
-    STATUS_PAUSED = 0x02
-
     length = UBInt32()
     elapsed = UBInt32()
 
@@ -91,6 +97,11 @@ class ColorScreenSizeResult(Structure):
     # Twice as large as ScreenSieResult
     data = UBInt8Sequence(10)
 
+RESULT_SUCCESS = 0x00
+RESULT_FAILURE = 0x02
+RESULT_BAD_LENGTH = 0x04
+RESULT_RESPONSE_NOT_COMMAND = 0x05
+
 
 class CommandResultParam(Structure):
     result = UBInt8()
@@ -107,7 +118,7 @@ class AirMode:
         COMPOSER = 0x06
 
     class Commands:
-        NCU_01 = 0x0000
+        NCU_00 = 0x0000
         FEEDBACK = 0x0001
         # A simple ping-request?
         NCU_02 = 0x0002
@@ -180,11 +191,27 @@ class AirMode:
         # Possibly color version of screen size?
         NCU_39 = 0x0039
 
+CONTROL_PLAY_PAUSE = 0x01
+CONTROL_STOP = 0x02
+CONTROL_SKIP_FORWARD = 0x03
+CONTROL_SKIP_BACKWARD = 0x04
+CONTROL_FAST_FORWARD = 0x05
+CONTROL_REWIND = 0x06
+CONTROL_STOP_FFRW = 0x07
+
+SHUFFLE_OFF = 0x00
+SHUFFLE_SONGS = 0x01
+SHUFFLE_ALBUMS = 0x02
+
+REPEAT_OFF = 0x00
+REPEAT_SONG = 0x01
+REPEAT_ALBUM = 0x02
+
 
 class AirCommand(Structure):
     id = DispatchField(UBInt16())
     parameters = DispatchTarget(None, dispatch_field=id, dispatch_mapping={
-        AirMode.Commands.NCU_01: CommandResultParam,
+        AirMode.Commands.NCU_00: CommandResultParam,
         AirMode.Commands.FEEDBACK: CommandResultParam,
         AirMode.Commands.NCU_02: EmptyParam,
         AirMode.Commands.NCU_03: UBInt8Sequence(8),
@@ -240,6 +267,7 @@ class SwitchMode:
         SET_ADVANCED_REMOTE = 0x0104
 
         GET_MODE = 0x0003
+        RES_MODE_SWITCH = 0x0400
         RES_MODE_VOICE_RECORDER = 0x0401
         RES_MODE_IPOD_REMOTE = 0x0402
         RES_MODE_ADVANCED_REMOTE = 0x0404
@@ -274,7 +302,6 @@ class SimpleRemoteMode:
         PREV_ALBUM = b'\x00\x40'
         STOP = b'\x00\x80'
 
-    class Params:
         PLAY = b'\x00\x00\x01'
         PAUSE = b'\x00\x00\x02'
         MUTE = b'\x00\x00\x04'
@@ -288,6 +315,9 @@ class SimpleRemoteMode:
         MENU_BUTTON = b'\x00\x00\x00\x40'
         OK_SELECT_BUTTON = b'\x00\x00\x00\x80'
 
+        SCROLL_UP = b'\x00\x00\x00\x00\x01'
+        SCROLL_DOWN = b'\x00\x00\x00\x00\x02'
+
 
 class SimpleRemoteCommand:
     id = Payload()
@@ -296,17 +326,23 @@ class SimpleRemoteCommand:
 class RequestModeStatusCommand:
     id = Magic(b'\x00\x03')
 
+MODE_SWITCH = 0x00
+MODE_VOICE_RECORDER = 0x01
+MODE_SIMPLE_REMOTE = 0x02
+MODE_REQUEST_MODE_STATUS = 0x03
+MODE_ADVANCED_REMOTE = 0x04
+
 
 class IpodPacket(Structure):
     header = Magic(b'\xFF\x55')
     length = LengthField(UBInt8(), get_length=lambda l: l.getval() - 1, set_length=lambda f, v: f.setval(v + 1))
     mode = DispatchField(UBInt8())
     command = DispatchTarget(length_provider=length, dispatch_field=mode, dispatch_mapping={
-        0x00: SwitchModeCommand,
-        0x01: VoiceRecorderCommand,
-        0X02: SimpleRemoteCommand,
-        0x03: RequestModeStatusCommand,
-        0x04: AirCommand,
+        MODE_SWITCH: SwitchModeCommand,
+        MODE_VOICE_RECORDER: VoiceRecorderCommand,
+        MODE_SIMPLE_REMOTE: SimpleRemoteCommand,
+        MODE_REQUEST_MODE_STATUS: RequestModeStatusCommand,
+        MODE_ADVANCED_REMOTE: AirCommand,
     })
     checksum = CRCField(UBInt8(), algo=ipod_checksum, start=2, end=-1)
 
