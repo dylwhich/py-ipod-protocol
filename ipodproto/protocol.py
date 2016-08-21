@@ -88,8 +88,8 @@ class PictureControlBlock(Structure):
 
 class ScreenSizeResult(Structure):
     width = UBInt16()
-    _ = Magic(b'\x00')
     height = UBInt16()
+    _ = Magic(b'\x01')
 
 
 class ColorScreenSizeResult(Structure):
