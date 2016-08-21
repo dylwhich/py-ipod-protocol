@@ -37,15 +37,6 @@ class CommandLengthExceeded(CommandFailed):
 class CommandIsResponse(CommandFailed):
     pass
 
-ItemType = Union[
-    AirMode.Types.PLAYLIST,
-    AirMode.Types.ARTIST,
-    AirMode.Types.ALBUM,
-    AirMode.Types.GENRE,
-    AirMode.Types.SONG,
-    AirMode.Types.COMPOSER,
-]
-
 
 class AdvancedRemote(IpodProtocolHandler):
     def __init__(self, *args, timeout=1, **kwargs):
@@ -91,7 +82,7 @@ class AdvancedRemote(IpodProtocolHandler):
 
         self.send_air_command(cmd)
 
-    def switch_item(self, type: ItemType, number: int) -> None:
+    def switch_item(self, type: int, number: int) -> None:
         cmd = AirCommand()
         cmd.id = AirMode.Commands.SWITCH_ITEM
         cmd.parameters = ItemParam()
@@ -101,14 +92,14 @@ class AdvancedRemote(IpodProtocolHandler):
         self.send_air_command(cmd)
         # FIXME do we also want to send the execute command?
 
-    def get_item_count(self, type: ItemType) -> int:
+    def get_item_count(self, type: int) -> int:
         cmd = AirCommand()
         cmd.id = AirMode.Commands.GET_TYPE_COUNT
         cmd.parameters = type
 
         return self.send_air_command(cmd, True)
 
-    def get_item_names(self, type: ItemType, start, count) -> List[str]:
+    def get_item_names(self, type: int, start, count) -> List[str]:
         cmd = AirCommand()
         cmd.id = AirMode.Commands.GET_ITEM_NAMES
         cmd.parameters = ItemRangeParam()
