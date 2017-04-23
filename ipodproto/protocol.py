@@ -1,3 +1,5 @@
+import threading
+
 from suitcase.fields import UBInt8, UBInt16, UBInt32, UBInt8Sequence, \
     Magic, LengthField, DispatchField, DispatchTarget, FieldProperty, Payload, CRCField
 from suitcase.structure import Structure
@@ -354,6 +356,11 @@ class IpodProtocolHandler:
         self.running = False
         self.read_args = read_args or {}
         self.write_args = write_args or {}
+        self._thread = None
+
+    def start(self):
+        self._thread = threading.Thread(self.run)
+        self._thread.start()
 
     def run(self):
         """
@@ -372,6 +379,7 @@ class IpodProtocolHandler:
         Stops reading data from the stream.
         """
         self.running = False
+        self._thread.stop()
 
     def send_packet(self, packet: IpodPacket):
         """

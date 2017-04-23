@@ -410,6 +410,7 @@ class IpodEmulator(IpodProtocolHandler):
         res.parameters.status = self.status
 
     def get_playlist_name(self, id):
+        """"""
         return "Playlist {}".format(id)
 
     def get_artist_name(self, id):
